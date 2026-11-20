@@ -2,6 +2,14 @@ const BASE = import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? 'https://sc
 
 /** Tells the API which portal's session to use, so both can stay signed in. */
 const PORTAL = 'admin';
+const TOKEN_KEY = `scriptx_${PORTAL}_token`;
+
+export const getAuthToken = () => (typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null);
+export const setAuthToken = (token) => {
+  if (typeof window === 'undefined') return;
+  if (token) localStorage.setItem(TOKEN_KEY, token);
+  else localStorage.removeItem(TOKEN_KEY);
+};
 
 export class ApiError extends Error {
   constructor(message, status) {
@@ -29,12 +37,17 @@ async function request(method, path, body, options = {}) {
     isForm ? UPLOAD_TIMEOUT_MS : TIMEOUT_MS,
   );
   options.signal?.addEventListener('abort', () => controller.abort(), { once: true });
+  const token = getAuthToken();
   let response;
   try {
     response = await fetch(`${BASE}/api${path}`, {
       method,
       credentials: 'include',
-      headers: { 'X-Portal': PORTAL, ...(body && !isForm ? { 'Content-Type': 'application/json' } : {}) },
+      headers: {
+        'X-Portal': PORTAL,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(body && !isForm ? { 'Content-Type': 'application/json' } : {}),
+      },
       body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
       signal: controller.signal,
     });
@@ -51,7 +64,7 @@ async function request(method, path, body, options = {}) {
 
   const data = await response.json().catch(() => null);
   if (!response.ok) {
-    if (response.status === 401 && !path.startsWith('/auth/login')) window.dispatchEvent(new Event('scriptx:session-expired'));
+    if (response.status === 401 && !path.startsWith('/auth/login') && path !== '/auth/me') window.dispatchEvent(new Event('scriptx:session-expired'));
     throw new ApiError(data?.message ?? 'Something went wrong. Please try again.', response.status);
   }
   return data;

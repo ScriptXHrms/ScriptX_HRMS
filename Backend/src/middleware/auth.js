@@ -10,44 +10,63 @@ export function signToken(payload, remember) {
   return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: remember ? '30d' : '12h' });
 }
 
-const isSecure = process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production';
+function isHttpsEnv(res) {
+  const req = res?.req;
+  return Boolean(
+    req?.secure ||
+    req?.get?.('x-forwarded-proto') === 'https' ||
+    process.env.RENDER ||
+    process.env.RENDER_EXTERNAL_URL ||
+    process.env.NODE_ENV === 'production' ||
+    process.env.COOKIE_SECURE === 'true'
+  );
+}
 
 export function setSessionCookie(res, portal, token, remember) {
+  const secure = isHttpsEnv(res);
   res.cookie(sessionCookie(portal), token, {
     httpOnly: true,
-    sameSite: isSecure ? 'none' : 'lax',
-    secure: isSecure,
+    sameSite: secure ? 'none' : 'lax',
+    secure: secure,
     path: '/',
     ...(remember ? { maxAge: 30 * 24 * 60 * 60 * 1000 } : {}),
   });
 }
 
 export function clearSessionCookie(res, portal) {
+  const secure = isHttpsEnv(res);
   (PORTALS.includes(portal) ? [portal] : PORTALS).forEach((name) =>
     res.clearCookie(sessionCookie(name), {
       path: '/',
-      sameSite: isSecure ? 'none' : 'lax',
-      secure: isSecure,
+      sameSite: secure ? 'none' : 'lax',
+      secure: secure,
     }),
   );
 }
 
 /**
- * Cookies ignore ports, so the two portals keep separate cookies and each app
- * names itself in X-Portal. File links can't send a header; any session will do.
+ * Checks Authorization header first (Bearer token), then falls back to the
+ * portal-specific session cookie. No legacy `scriptx_session` fallback.
  */
 function sessionToken(req) {
+  const authHeader = req.get('authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const bearer = authHeader.slice(7).trim();
+    if (bearer) return bearer;
+  }
   const portal = req.get('x-portal');
-  if (PORTALS.includes(portal)) return req.cookies?.[sessionCookie(portal)];
+  if (PORTALS.includes(portal) && req.cookies?.[sessionCookie(portal)]) {
+    return req.cookies[sessionCookie(portal)];
+  }
   return PORTALS.map((name) => req.cookies?.[sessionCookie(name)]).find(Boolean);
 }
 
 /**
- * Loads the signed-in account. `req.auth` is:
- * { portal: 'admin'|'employee', account, employeeId, isSuperAdmin, modules: { key: 'view'|'manage' } }
- * HR staff are employees with a Privilege record, signed in to the admin portal.
+ * Shared auth resolver. Returns `req.auth`-shaped object on success.
+ * Throws HttpError on any failure (no token, bad token, portal mismatch,
+ * deleted account, removed privilege).
  */
-export async function protect(req, res, next) {
+export async function resolveAuth(req) {
   const token = sessionToken(req);
   if (!token) throw new HttpError(401, 'Please sign in to continue.');
 
@@ -58,17 +77,22 @@ export async function protect(req, res, next) {
     throw new HttpError(401, 'Your session has expired. Please sign in again.');
   }
 
+  // Portal mismatch: admin token used on employee portal or vice-versa.
+  const headerPortal = req.get('x-portal');
+  if (PORTALS.includes(headerPortal) && claims.portal !== headerPortal) {
+    throw new HttpError(401, 'Please sign in to continue.');
+  }
+
   if (claims.kind === 'admin') {
     const account = await AdminUser.findById(claims.sub).lean();
     if (!account) throw new HttpError(401, 'Your session has expired. Please sign in again.');
-    req.auth = {
+    return {
       portal: 'admin',
       account,
       employeeId: null,
       isSuperAdmin: true,
       modules: Object.fromEntries(MODULE_KEYS.map((key) => [key, 'manage'])),
     };
-    return next();
   }
 
   const account = await Employee.findById(claims.sub).populate('department', 'name').populate('role', 'name').lean();
@@ -77,13 +101,21 @@ export async function protect(req, res, next) {
   const privilege = claims.portal === 'admin' ? await Privilege.findOne({ employee: account._id }).lean() : null;
   if (claims.portal === 'admin' && !privilege) throw new HttpError(401, 'Your admin access was removed. Please sign in again.');
 
-  req.auth = {
+  return {
     portal: claims.portal,
     account,
     employeeId: account._id,
     isSuperAdmin: false,
     modules: Object.fromEntries((privilege?.modules ?? []).map((m) => [m.key, m.permission])),
   };
+}
+
+/**
+ * Express middleware. Populates `req.auth` or responds 401.
+ * Used on every protected route *except* GET /auth/me.
+ */
+export async function protect(req, res, next) {
+  req.auth = await resolveAuth(req);
   return next();
 }
 

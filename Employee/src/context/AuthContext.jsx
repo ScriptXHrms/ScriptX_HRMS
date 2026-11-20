@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { api } from '../api/client';
+import { api, setAuthToken } from '../api/client';
 import { setRememberedEmail } from '../utils/authHelpers';
 import { DISPLAY_FORMATS_CHANGED_EVENT, getDisplayFormats, setDisplayFormats } from '../utils/dateUtils';
 
@@ -15,7 +15,10 @@ export function AuthProvider({ children }) {
     let active = true;
     api
       .get('/auth/me')
-      .then((data) => active && setSession(data))
+      .then((data) => {
+        if (!active) return;
+        setSession(data?.authenticated ? data : null);
+      })
       .catch(() => active && setSession(null))
       .finally(() => active && setReady(true));
     return () => {
@@ -50,13 +53,17 @@ export function AuthProvider({ children }) {
   }, [session]);
 
   useEffect(() => {
-    const onExpired = () => setSession(null);
+    const onExpired = () => {
+      setAuthToken(null);
+      setSession(null);
+    };
     window.addEventListener('scriptx:session-expired', onExpired);
     return () => window.removeEventListener('scriptx:session-expired', onExpired);
   }, []);
 
   const login = useCallback(async ({ role, email, password, remember }) => {
-    await api.post('/auth/login', { role, email: email.trim(), password, remember });
+    const res = await api.post('/auth/login', { role, email: email.trim(), password, remember });
+    if (res?.token) setAuthToken(res.token);
     const next = await api.get('/auth/me');
     setRememberedEmail(role, remember ? email.trim() : null);
     setSession(next);
@@ -65,6 +72,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     await api.post('/auth/logout').catch(() => {});
+    setAuthToken(null);
     setSession(null);
   }, []);
 

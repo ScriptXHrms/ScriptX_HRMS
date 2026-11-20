@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { AdminUser, Employee, Privilege } from '../models/index.js';
-import { clearSessionCookie, setSessionCookie, signToken } from '../middleware/auth.js';
+import { clearSessionCookie, resolveAuth, setSessionCookie, signToken } from '../middleware/auth.js';
 import { badRequest, HttpError } from '../utils/http.js';
 import { sendMail } from '../utils/mail.js';
 
@@ -58,7 +58,7 @@ export async function login(req, res) {
   const kind = admin ? 'admin' : 'employee';
   const token = signToken({ sub: account._id, kind, portal }, Boolean(remember));
   setSessionCookie(res, portal, token, Boolean(remember));
-  res.json({ ok: true });
+  res.json({ ok: true, token });
 }
 
 export function logout(req, res) {
@@ -66,14 +66,40 @@ export function logout(req, res) {
   res.json({ ok: true });
 }
 
+/**
+ * Hard-auth version: used after protect() middleware on other routes.
+ * req.auth is guaranteed to exist.
+ */
 export async function getMe(req, res) {
   const { portal, account, isSuperAdmin } = req.auth;
   res.json({
+    authenticated: true,
     role: portal,
     isSuperAdmin,
     modules: req.auth.modules,
     user: publicUser(account, isSuperAdmin ? 'admin' : 'employee'),
   });
+}
+
+/**
+ * Soft-auth "who am I?" — always returns 200.
+ * No session → { authenticated: false, user: null }.
+ * Valid session → same payload as getMe plus authenticated: true.
+ */
+export async function getMeSoft(req, res) {
+  try {
+    const auth = await resolveAuth(req);
+    const { portal, account, isSuperAdmin } = auth;
+    res.json({
+      authenticated: true,
+      role: portal,
+      isSuperAdmin,
+      modules: auth.modules,
+      user: publicUser(account, isSuperAdmin ? 'admin' : 'employee'),
+    });
+  } catch {
+    res.json({ authenticated: false, user: null });
+  }
 }
 
 export async function changePassword(req, res) {
