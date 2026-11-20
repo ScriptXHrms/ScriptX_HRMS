@@ -33,7 +33,13 @@ function pick(body, fields) {
 }
 
 async function nextEmployeeId() {
-  return `SX-${String(await nextSequence('employee')).padStart(3, '0')}`;
+  const year = dayKey().slice(0, 4);
+  let id;
+  do {
+    const seq = await nextSequence(`employee_${year}`);
+    id = `SX-${year}${String(seq).padStart(4, '0')}`;
+  } while (await Employee.exists({ employeeId: id }));
+  return id;
 }
 
 async function findOr404(id, query = Employee.findById(id)) {
