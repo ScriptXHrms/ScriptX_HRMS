@@ -79,11 +79,11 @@ function AttendanceGauge({ percent = 50 }) {
 }
 
 /* ---------- Donut Chart for Tasks (44x44 viewBox to prevent clipped edges) ---------- */
-function TaskDonut({ completed = 1, inProgress = 2, pending = 1 }) {
-  const total = completed + inProgress + pending || 1;
-  const pctCompleted = (completed / total) * 100;
-  const pctInProgress = (inProgress / total) * 100;
-  const pctPending = (pending / total) * 100;
+function TaskDonut({ completed = 0, inProgress = 0, pending = 0 }) {
+  const total = completed + inProgress + pending;
+  const pctCompleted = total > 0 ? (completed / total) * 100 : 0;
+  const pctInProgress = total > 0 ? (inProgress / total) * 100 : 0;
+  const pctPending = total > 0 ? (pending / total) * 100 : 0;
 
   const strokeDash1 = `${pctCompleted} ${100 - pctCompleted}`;
   const strokeDash2 = `${pctInProgress} ${100 - pctInProgress}`;
@@ -96,7 +96,7 @@ function TaskDonut({ completed = 1, inProgress = 2, pending = 1 }) {
   return (
     <div className="relative flex h-24 w-24 shrink-0 items-center justify-center">
       <svg className="h-full w-full -rotate-90 transform overflow-visible" viewBox="0 0 44 44">
-        <circle cx="22" cy="22" r="15.9155" fill="none" stroke="#f8fafc" strokeWidth="4.5" />
+        <circle cx="22" cy="22" r="15.9155" fill="none" stroke="#f1f5f9" strokeWidth="4.5" />
         {/* Completed - Purple */}
         {completed > 0 && (
           <circle
@@ -283,13 +283,9 @@ export default function AdminDashboard() {
     // Total calendar days in current month
     const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
 
-    // Holidays in current month
+    // Real Holidays in current month from database
     const holidayList = data?.holidays || [];
     const holidayDateSet = new Set(holidayList.map((h) => h.date));
-    // Sample fallback: 20 Nov 2026 if in Nov 2026
-    if (year === 2026 && month === 10) {
-      holidayDateSet.add('2026-11-20');
-    }
 
     let totalWorkingDays = 0;
     let completedWorkingDays = 0;
@@ -311,24 +307,26 @@ export default function AdminDashboard() {
       }
     }
 
-    const percent = totalWorkingDays > 0 ? Math.round((completedWorkingDays / totalWorkingDays) * 100) : 50;
+    const percent = totalWorkingDays > 0 ? Math.round((completedWorkingDays / totalWorkingDays) * 100) : 0;
     const latestLogin = data?.attendance?.preview?.find((r) => r.login)?.login;
 
     return {
       percent,
       attended: completedWorkingDays,
       total: totalWorkingDays,
-      lastPunch: latestLogin ? formatTime(latestLogin) : formatTime('09:15'),
+      latestLogin,
+      lastPunch: latestLogin ? formatTime(latestLogin) : null,
     };
   }, [data, today]);
 
   const taskNumbers = useMemo(() => {
     const stats = data?.tasks?.stats;
-    if (!stats) return { completed: 1, inProgress: 2, pending: 1 };
-    const completed = stats.byStatus?.['Done'] ?? 1;
-    const inProgress = stats.byStatus?.['In Progress'] ?? 2;
-    const pending = (stats.byStatus?.['To Do'] ?? 0) + (stats.byStatus?.['In Review'] ?? 0) || 1;
-    return { completed, inProgress, pending };
+    if (!stats) return { completed: 0, inProgress: 0, pending: 0, total: 0 };
+    const completed = stats.byStatus?.['Done'] ?? 0;
+    const inProgress = stats.byStatus?.['In Progress'] ?? 0;
+    const pending = (stats.byStatus?.['To Do'] ?? 0) + (stats.byStatus?.['In Review'] ?? 0);
+    const total = completed + inProgress + pending;
+    return { completed, inProgress, pending, total };
   }, [data]);
 
   const pendingRequestsCount = useMemo(() => {
@@ -487,8 +485,10 @@ export default function AdminDashboard() {
                   {attendanceStats.attended} / {attendanceStats.total} Days
                 </span>
                 <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-slate-700">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
-                  <span className="truncate">Last Punch In Today, {attendanceStats.lastPunch}</span>
+                  <span className={cx('h-2 w-2 rounded-full shrink-0', attendanceStats.latestLogin ? 'bg-emerald-500' : 'bg-slate-300')} />
+                  <span className="truncate">
+                    {attendanceStats.latestLogin ? `Last Punch In Today, ${attendanceStats.lastPunch}` : 'No Punch In Today'}
+                  </span>
                 </div>
               </div>
             </div>
