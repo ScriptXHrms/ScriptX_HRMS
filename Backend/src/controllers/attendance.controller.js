@@ -5,6 +5,7 @@ import {
   buildMonthDays,
   classifyDay,
   loadRange,
+  loadTaskLop,
   STATUS_CODES,
   summarizeEntries,
   summarizeMonth,
@@ -147,9 +148,12 @@ export async function getMyMonth(req, res) {
     PayrollOverride.find({ employee: req.auth.employeeId, year, month }).lean(),
     getSettings(),
   ]);
-  const summary = applyOverrides(detail.summary, overrides);
-  const { daysInMonth } = monthRange(year, month);
-  res.json({ ...detail, summary, pay: { ...payFor(employee, summary, daysInMonth, settings), daysInMonth } });
+  const range = monthRange(year, month);
+  // Load task LOP for this employee
+  const taskLopMap = await loadTaskLop([req.auth.employeeId], range.start, range.end);
+  const rawSummary = { ...detail.summary, taskLop: taskLopMap.get(String(req.auth.employeeId)) ?? 0 };
+  const summary = applyOverrides(rawSummary, overrides);
+  res.json({ ...detail, summary, pay: { ...payFor(employee, summary, range.daysInMonth, settings), daysInMonth: range.daysInMonth } });
 }
 
 export async function getDaily(req, res) {

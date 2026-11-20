@@ -1,4 +1,4 @@
-import { Attendance, Holiday, Leave, LeaveType } from '../models/index.js';
+import { Attendance, Holiday, Leave, LeaveType, Task } from '../models/index.js';
 import { dayKey, eachDay, isSunday, minutesOfDay, monthRange, timeToMinutes } from './dates.js';
 
 const FULL_DAY_MINUTES = 480;
@@ -219,7 +219,39 @@ export function summarizeMonth(days, settings) {
   const lateUnit = settings.lateLopType === 'Full Day' ? 1 : 0.5;
   const lateLop = settings.lateLopDays > 0 ? Math.floor(totals.late / settings.lateLopDays) * lateUnit : 0;
   const lop = totals.eligibleDays - totals.earnedDays;
-  return { ...totals, lateLop, lop, payableDays: Math.max(0, totals.earnedDays - lateLop) };
+  // workingDays = eligibleDays - holidays - weeklyOffs (the denominator for per-day salary)
+  const workingDays = totals.eligibleDays - totals.holidays - totals.weeklyOffs;
+  // payableDays = workingDays minus leave/absent LOP minus late LOP (sundays/holidays are always paid)
+  const payableDays = Math.max(0, workingDays - lop - lateLop);
+  return { ...totals, lateLop, lop, workingDays, payableDays, taskLop: 0 };
+}
+
+/**
+ * Count overdue tasks for employees in a given month.
+ * A task is "overdue" if its dueDate falls within the month range,
+ * the dueDate has passed (or is today), and the task status is NOT 'Done'.
+ * Returns a Map of employeeId → number of overdue tasks.
+ */
+export async function loadTaskLop(employeeIds, start, end) {
+  const today = dayKey();
+  // Only count tasks whose due date has actually passed (not future)
+  const cutoff = end <= today ? end : today;
+  const overdueTasks = await Task.find({
+    assignedTo: { $in: employeeIds },
+    dueDate: { $gte: start, $lte: cutoff },
+    status: { $ne: 'Done' },
+  }).select('assignedTo').lean();
+
+  const counts = new Map();
+  overdueTasks.forEach((task) => {
+    (task.assignedTo ?? []).forEach((empId) => {
+      const key = String(empId);
+      if (employeeIds.some((id) => String(id) === key)) {
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+      }
+    });
+  });
+  return counts;
 }
 
 export { monthRange };

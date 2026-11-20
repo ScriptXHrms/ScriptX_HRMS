@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { Employee, getSettings, PayrollOverride, SalaryPayment } from '../models/index.js';
-import { buildMonthDays, loadRange, summarizeMonth } from '../utils/attendance.js';
+import { buildMonthDays, loadRange, loadTaskLop, summarizeMonth } from '../utils/attendance.js';
 import { dayKey, isDayKey, monthRange, parseMonth } from '../utils/dates.js';
 import { badRequest, notFound } from '../utils/http.js';
 import { applyOverrides, payFor } from '../utils/payroll.js';
@@ -26,16 +26,18 @@ export const getPayroll = async (req, res) => {
     .lean();
 
   const ids = employees.map((e) => e._id);
-  const [ctx, settings, overrides, payments] = await Promise.all([
+  const [ctx, settings, overrides, payments, taskLopMap] = await Promise.all([
     loadRange(ids, range.start, range.end),
     getSettings(),
     PayrollOverride.find({ employee: { $in: ids }, year, month }).lean(),
     SalaryPayment.find({ employee: { $in: ids }, year, month }).lean(),
+    loadTaskLop(ids, range.start, range.end),
   ]);
 
   const items = employees.map((employee) => {
     const own = overrides.filter((o) => String(o.employee) === String(employee._id));
-    const attendance = applyOverrides(summarizeMonth(buildMonthDays(employee, range, ctx), settings), own);
+    const rawSummary = { ...summarizeMonth(buildMonthDays(employee, range, ctx), settings), taskLop: taskLopMap.get(String(employee._id)) ?? 0 };
+    const attendance = applyOverrides(rawSummary, own);
     const { isStipend, pay } = payFor(employee, attendance, range.daysInMonth, settings);
     const payment = payments.find((p) => String(p.employee) === String(employee._id));
     return { employee, attendance, pay, isStipend, overrides: own, payment: payment ?? null };
@@ -56,7 +58,7 @@ export const updatePayrollOverride = async (req, res) => {
   const { employee, month: monthValue, field, value, note } = req.body;
   const { year, month } = requireMonth(monthValue);
   if (!mongoose.isValidObjectId(employee)) throw badRequest('Choose an employee.');
-  if (!['payableDays', 'lop', 'lateLop', 'tds'].includes(field)) throw badRequest('Unknown field.');
+  if (!['payableDays', 'lop', 'lateLop', 'taskLop', 'tds'].includes(field)) throw badRequest('Unknown field.');
   const number = Number(value);
   if (!Number.isFinite(number) || number < 0) throw badRequest('Enter a valid number.');
   if (!String(note ?? '').trim()) throw badRequest('A note is required for manual changes.');

@@ -181,16 +181,11 @@ function Lines({ rows }) {
 function PayPanel({ pay, summary, month, index, className }) {
   const { isStipend, pay: p } = pay;
   const word = isStipend ? 'Stipend' : 'Salary';
-  // Salary is pro-rated on gross (CTC minus employer PF and ESI); a stipend on the full amount.
-  const lopDeduction = Math.max(0, (isStipend ? p.stipend : p.gross) - p.actualGross);
-  // Only the deductions that apply, so Earned minus these is exactly Net Pay.
-  const deductions = (isStipend ? [['TDS', p.tds]] : [['PF', p.employeePF], ['ESI', p.employeeESI], ['Professional Tax', p.professionalTax], ['TDS', p.tds]]).filter(([, amount]) => amount > 0);
   const rows = [
-    { label: `Monthly ${word} (CTC)`, value: formatMoney(isStipend ? p.stipend : p.ctc) },
-    !isStipend && { label: 'Monthly Gross', value: formatMoney(p.gross) },
+    { label: 'Monthly Gross', value: formatMoney(isStipend ? p.stipend : p.gross) },
     { label: 'Payable Days', value: summary.payableDays },
     { label: `Earned ${word}`, value: formatMoney(p.actualGross) },
-  ].filter(Boolean);
+  ];
 
   return (
     <Panel title={`${word} Structure – ${monthLabel(month)}`} index={index} className={className}>
@@ -202,14 +197,8 @@ function PayPanel({ pay, summary, month, index, className }) {
       <div className="space-y-3 p-5 pt-2">
         <div className="flex items-center justify-between gap-3 rounded-xl bg-canvas px-4 py-3 text-sm">
           <p className="font-bold text-ink">LOP Deduction</p>
-          <p className="font-bold text-red-600 tabular-nums">{minus(lopDeduction)}</p>
+          <p className="font-bold text-red-600 tabular-nums">{minus(p.lopDeduction ?? 0)}</p>
         </div>
-        {deductions.length > 0 && (
-          <div className="flex items-center justify-between gap-3 rounded-xl bg-canvas px-4 py-3 text-sm">
-            <p className="font-bold text-ink">{deductions.map(([name]) => name).join(' + ')}</p>
-            <p className="font-bold text-red-600 tabular-nums">{minus(deductions.reduce((total, [, amount]) => total + amount, 0))}</p>
-          </div>
-        )}
         <div className="flex items-center justify-between gap-3 rounded-xl bg-green-50 px-4 py-3.5 ring-1 ring-green-100 ring-inset">
           <p className="text-base font-bold text-green-800">Net Pay</p>
           <p className="text-lg font-extrabold text-green-700 tabular-nums">{formatMoney(p.netSalary)}</p>
@@ -311,6 +300,7 @@ export default function MonthlyAttendanceView({ month, onMonthChange, data, load
                 { label: 'Half Day', value: summary.halfDay, tone: 'red' },
                 { label: 'LOP', value: summary.lop, tone: 'red' },
                 { label: 'Late LOP', value: summary.lateLop, tone: 'red' },
+                { label: 'Task LOP', value: summary.taskLop ?? 0, tone: 'red' },
                 { label: 'Payable Days', value: summary.payableDays, tone: 'green' },
               ]}
             />

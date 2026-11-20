@@ -23,6 +23,7 @@ const OVERRIDE_FIELDS = [
   { value: 'payableDays', label: 'Payable days' },
   { value: 'lop', label: 'LOP days' },
   { value: 'lateLop', label: 'Late LOP days' },
+  { value: 'taskLop', label: 'Task LOP days' },
   { value: 'tds', label: 'TDS amount' },
 ];
 
@@ -32,16 +33,16 @@ function Payslip({ row, month }) {
   const { employee, attendance, pay, isStipend } = row;
   const earnings = isStipend
     ? [['Stipend', pay.actualGross]]
-    : [['Basic', pay.basic], ['HRA', pay.hra], ['Medical', pay.medical], ['Conveyance', pay.conveyance], ['Other allowance', pay.other]];
+    : [['Gross Salary', pay.actualGross]];
   const deductions = isStipend
     ? [['TDS', pay.tds]]
-    : [['Employee PF', pay.employeePF], ['Employee ESI', pay.employeeESI], ['Professional tax', pay.professionalTax], ['TDS', pay.tds]];
+    : [['TDS', pay.tds]];
   const details = [
     ['Employee ID', employee.employeeId],
     ['Department', employee.department?.name ?? '—'],
     ['Designation', employee.role?.name ?? '—'],
     ['Pay days', attendance.payableDays],
-    ['LOP', attendance.lop + attendance.lateLop],
+    ['LOP', attendance.lop + attendance.lateLop + (attendance.taskLop ?? 0)],
     ['Bank', employee.paymentType === 'BANK' ? (employee.bank?.accountNo ?? '—') : 'Cash'],
     ['PAN', employee.panNo || '—'],
     ['UAN', employee.uanNo || '—'],
@@ -115,13 +116,9 @@ export default function AdminPayroll() {
           { key: 'stipend', header: 'Stipend', align: 'right', render: (row) => money(row.pay.stipend) },
         ]
       : [
-          { key: 'ctc', header: 'CTC/M', align: 'right', render: (row) => money(row.pay.ctc) },
-          { key: 'gross', header: 'Act. Gross', align: 'right', render: (row) => money(row.pay.actualGross) },
-          { key: 'basic', header: 'Basic', align: 'right', render: (row) => money(row.pay.basic) },
-          { key: 'hra', header: 'HRA', align: 'right', render: (row) => money(row.pay.hra) },
-          { key: 'pf', header: 'EE PF', align: 'right', render: (row) => money(row.pay.employeePF) },
-          { key: 'esi', header: 'EE ESI', align: 'right', render: (row) => money(row.pay.employeeESI) },
-          { key: 'pt', header: 'PT', align: 'right', render: (row) => money(row.pay.professionalTax) },
+          { key: 'gross', header: 'Gross', align: 'right', render: (row) => money(row.pay.gross) },
+          { key: 'earned', header: 'Earned', align: 'right', render: (row) => money(row.pay.actualGross) },
+          { key: 'lopDed', header: 'LOP Ded.', align: 'right', render: (row) => money(row.pay.lopDeduction) },
           { key: 'tds', header: 'TDS', align: 'right', render: (row) => money(row.pay.tds) },
         ];
     return [
@@ -129,6 +126,7 @@ export default function AdminPayroll() {
       { key: 'days', header: 'Pay Days', align: 'center', render: (row) => <span className="font-semibold tabular-nums">{row.attendance.payableDays}</span> },
       { key: 'lop', header: 'LOP', align: 'center', render: (row) => row.attendance.lop },
       { key: 'lateLop', header: 'Late LOP', align: 'center', render: (row) => row.attendance.lateLop },
+      { key: 'taskLop', header: 'Task LOP', align: 'center', render: (row) => row.attendance.taskLop ?? 0 },
       ...salary,
       { key: 'net', header: 'Net Sal', align: 'right', render: (row) => <span className="font-bold tabular-nums">{money(row.pay.netSalary)}</span> },
       {
@@ -169,10 +167,10 @@ export default function AdminPayroll() {
   const exportCsv = () => {
     downloadCsv(
       `payroll-${month}-${employeeType.toLowerCase()}.csv`,
-      ['Employee ID', 'Name', 'Pay Days', 'LOP', 'Late LOP', 'CTC', 'Actual Gross', 'Basic', 'HRA', 'Medical', 'Conveyance', 'Other', 'EE PF', 'ER PF', 'EPS', 'EE ESI', 'ER ESI', 'PT', 'TDS', 'Net Salary', 'Status'],
+      ['Employee ID', 'Name', 'Pay Days', 'LOP', 'Late LOP', 'Task LOP', 'Gross', 'Earned', 'LOP Deduction', 'TDS', 'Net Salary', 'Status'],
       rows.map(({ employee, attendance, pay, payment }) => [
-        employee.employeeId, employee.name, attendance.payableDays, attendance.lop, attendance.lateLop, pay.ctc ?? pay.stipend, pay.actualGross, pay.basic, pay.hra, pay.medical, pay.conveyance, pay.other,
-        pay.employeePF, pay.employerPF, pay.employerEPS, pay.employeeESI, pay.employerESI, pay.professionalTax, pay.tds, pay.netSalary, payment?.status === 'Paid' ? 'Paid' : 'Pending',
+        employee.employeeId, employee.name, attendance.payableDays, attendance.lop, attendance.lateLop, attendance.taskLop ?? 0, pay.gross ?? pay.stipend, pay.actualGross, pay.lopDeduction ?? 0,
+        pay.tds, pay.netSalary, payment?.status === 'Paid' ? 'Paid' : 'Pending',
       ]),
     );
   };
