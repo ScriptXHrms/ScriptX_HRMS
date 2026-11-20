@@ -40,6 +40,9 @@ const defaultOrigins = [
   'https://portalscriptx.firebaseapp.com',
   'https://employeescriptx.web.app',
   'https://employeescriptx.firebaseapp.com',
+  'https://portal.script-x.in',
+  'https://employee.script-x.in',
+  'https://script-x.in',
 ];
 
 const envOrigins = (process.env.CLIENT_URL || '')
@@ -60,6 +63,7 @@ app.use(
         allowedOrigins.includes(origin) ||
         /^https:\/\/.*\.web\.app$/.test(origin) ||
         /^https:\/\/.*\.firebaseapp\.com$/.test(origin) ||
+        /^https:\/\/([^.]+\.)?script-x\.in$/.test(origin) ||
         /^http:\/\/localhost:\d+$/.test(origin)
       ) {
         return callback(null, true);
