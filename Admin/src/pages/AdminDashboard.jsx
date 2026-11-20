@@ -377,48 +377,10 @@ export default function AdminDashboard() {
       .sort((a, b) => a.daysLeft - b.daysLeft);
   }, [data, today]);
 
-  /* Client Payments for Finance Card grouped by frequency */
-  const FINANCE_PAYMENT_TYPES = useMemo(() => ['Monthly', 'Quarterly', 'Half Yearly', 'Yearly', 'One Time'], []);
-  const [selectedFinanceTab, setSelectedFinanceTab] = useState(null);
-
-  const clientPaymentsByType = useMemo(() => {
-    if (data?.finance?.clientPaymentsByType) return data.finance.clientPaymentsByType;
-    const map = { Monthly: [], Quarterly: [], 'Half Yearly': [], Yearly: [], 'One Time': [] };
-    const list = data?.finance?.clientPayments || [];
-    for (const cp of list) {
-      let type = cp.paymentType || 'One Time';
-      if (type === 'Quartly') type = 'Quarterly';
-      if (type === 'Full Payment') type = 'One Time';
-      if (type === 'Recurring') type = 'Monthly';
-      if (map[type]) map[type].push(cp);
-      else map['One Time'].push(cp);
-    }
-    return map;
+  /* Client Payments for Finance Card */
+  const clientPaymentsList = useMemo(() => {
+    return data?.finance?.clientPayments || [];
   }, [data]);
-
-  const clientPaymentStats = useMemo(() => {
-    if (data?.finance?.clientPaymentStats) return data.finance.clientPaymentStats;
-    const stats = {};
-    for (const key of ['Monthly', 'Quarterly', 'Half Yearly', 'Yearly', 'One Time']) {
-      const list = clientPaymentsByType[key] || [];
-      const pending = list.filter((p) => (Number(p.balance) || 0) > 0);
-      stats[key] = {
-        totalCount: list.length,
-        pendingCount: pending.length,
-        totalBalance: pending.reduce((sum, p) => sum + (Number(p.balance) || 0), 0),
-      };
-    }
-    return stats;
-  }, [data, clientPaymentsByType]);
-
-  const defaultFinanceTab = useMemo(() => {
-    for (const type of FINANCE_PAYMENT_TYPES) {
-      if ((clientPaymentStats[type]?.pendingCount || 0) > 0) return type;
-    }
-    return 'Monthly';
-  }, [clientPaymentStats, FINANCE_PAYMENT_TYPES]);
-
-  const activeFinanceTab = selectedFinanceTab || defaultFinanceTab;
 
   /* Birthdays & Work Anniversaries List */
   const celebrationsList = useMemo(() => {
@@ -551,47 +513,13 @@ export default function AdminDashboard() {
           className="h-fit self-start"
           index={3}
         >
-          {/* Payment Type Tabs: Monthly, Quarterly, Half Yearly, Yearly, One Time */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar mb-3 border-b border-line/60 pb-2.5">
-            {FINANCE_PAYMENT_TYPES.map((type) => {
-              const isSelected = activeFinanceTab === type;
-              const pendingCount = clientPaymentStats[type]?.pendingCount ?? 0;
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setSelectedFinanceTab(type)}
-                  className={cx(
-                    'flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer',
-                    isSelected
-                      ? 'bg-[#3b127e] text-white shadow-xs'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900',
-                  )}
-                >
-                  <span>{type}</span>
-                  {pendingCount > 0 && (
-                    <span
-                      className={cx(
-                        'flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-extrabold',
-                        isSelected ? 'bg-amber-400 text-slate-900' : 'bg-red-500 text-white',
-                      )}
-                    >
-                      {pendingCount}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Tab Content: Payments for Selected Frequency */}
           {(() => {
-            const list = clientPaymentsByType[activeFinanceTab] || [];
+            const list = clientPaymentsList;
 
             if (list.length > 0) {
               return (
                 <div className="space-y-2.5">
-                  {list.slice(0, 2).map((item) => {
+                  {list.slice(0, 3).map((item) => {
                     const isRed = item.highlightColor === 'red';
 
                     return (
@@ -670,12 +598,12 @@ export default function AdminDashboard() {
                       </div>
                     );
                   })}
-                  {list.length > 2 && (
+                  {list.length > 3 && (
                     <Link
                       to="/admin/finance/income"
                       className="block text-center text-xs font-bold text-brand-700 hover:underline pt-0.5"
                     >
-                      +{list.length - 2} more {activeFinanceTab.toLowerCase()} payments →
+                      +{list.length - 3} more payments →
                     </Link>
                   )}
                 </div>
@@ -687,9 +615,9 @@ export default function AdminDashboard() {
                 <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 mb-1.5">
                   <CheckCircle2 size={18} />
                 </div>
-                <p className="text-xs font-bold text-ink">No {activeFinanceTab} Dues Pending</p>
+                <p className="text-xs font-bold text-ink">No Dues Pending</p>
                 <p className="mt-0.5 text-[11px] text-muted">
-                  No upcoming {activeFinanceTab.toLowerCase()} client payments due within 3 days.
+                  No upcoming client payments due within 3 days.
                 </p>
               </div>
             );
