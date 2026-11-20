@@ -20,6 +20,7 @@ import payrollRoutes from './src/routes/payroll.js';
 import requestRoutes from './src/routes/requests.js';
 import taskRoutes from './src/routes/tasks.js';
 import { startAutoLogout } from './src/utils/autoLogout.js';
+import { dummyHandler, startDummyPing } from './src/dummy/dummy.js';
 
 for (const key of ['JWT_SECRET', 'MONGO_URI']) {
   if (!process.env[key]) {
@@ -38,6 +39,8 @@ app.use(express.json({ limit: '5mb' }));
 app.use(cookieParser());
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+app.get('/api/dummy', dummyHandler);
+app.get('/dummy', dummyHandler);
 app.use('/api/auth', authRoutes);
 
 // Uploaded HR documents are private, so they sit behind the session too.
@@ -73,6 +76,7 @@ const port = Number(process.env.PORT) || 5000;
 await connectDB();
 await syncUnsyncedLedgers();
 startAutoLogout();
+startDummyPing();
 app.listen(port, (error) => {
   // Express 5 hands listen failures, such as a port in use, to this callback.
   if (error) {
