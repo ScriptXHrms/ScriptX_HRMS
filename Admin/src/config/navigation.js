@@ -117,4 +117,6 @@ export const flattenNav = (items) =>
 export const matchesPath = (pathname, path) => pathname === path || pathname.startsWith(`${path}/`);
 
 /** Sign-in page of the other portal. It's a separate app, so link to it with a plain <a>. */
-export const EMPLOYEE_LOGIN_URL = import.meta.env.VITE_EMPLOYEE_URL ?? '/employee/login';
+export const EMPLOYEE_LOGIN_URL =
+  import.meta.env.VITE_EMPLOYEE_URL ??
+  (import.meta.env.PROD ? 'https://employeescriptx.web.app/employee/login' : 'http://localhost:5174/employee/login');

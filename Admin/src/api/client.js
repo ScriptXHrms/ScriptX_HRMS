@@ -1,4 +1,4 @@
-const BASE = import.meta.env.VITE_API_URL ?? '';
+const BASE = import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? 'https://scriptx-hrms.onrender.com' : '');
 
 /** Tells the API which portal's session to use, so both can stay signed in. */
 const PORTAL = 'admin';

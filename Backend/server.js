@@ -33,7 +33,45 @@ const app = express();
 app.set('trust proxy', 1);
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
-app.use(cors({ origin: process.env.CLIENT_URL?.split(','), credentials: true }));
+const defaultOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'https://portalscriptx.web.app',
+  'https://portalscriptx.firebaseapp.com',
+  'https://employeescriptx.web.app',
+  'https://employeescriptx.firebaseapp.com',
+];
+
+const envOrigins = (process.env.CLIENT_URL || '')
+  .split(',')
+  .map((u) => u.trim())
+  .filter(Boolean);
+
+const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envOrigins]));
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (curl, server-to-server, mobile)
+      if (!origin) return callback(null, true);
+
+      // Allow if origin is explicitly in allowedOrigins, or matches Firebase or localhost
+      if (
+        allowedOrigins.includes(origin) ||
+        /^https:\/\/.*\.web\.app$/.test(origin) ||
+        /^https:\/\/.*\.firebaseapp\.com$/.test(origin) ||
+        /^http:\/\/localhost:\d+$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked origin: ${origin}`));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Portal'],
+  }),
+);
 if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
 app.use(express.json({ limit: '5mb' }));
 app.use(cookieParser());

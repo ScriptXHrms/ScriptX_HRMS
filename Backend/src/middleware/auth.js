@@ -10,18 +10,26 @@ export function signToken(payload, remember) {
   return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: remember ? '30d' : '12h' });
 }
 
+const isSecure = process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production';
+
 export function setSessionCookie(res, portal, token, remember) {
   res.cookie(sessionCookie(portal), token, {
     httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.COOKIE_SECURE === 'true',
+    sameSite: isSecure ? 'none' : 'lax',
+    secure: isSecure,
     path: '/',
     ...(remember ? { maxAge: 30 * 24 * 60 * 60 * 1000 } : {}),
   });
 }
 
 export function clearSessionCookie(res, portal) {
-  (PORTALS.includes(portal) ? [portal] : PORTALS).forEach((name) => res.clearCookie(sessionCookie(name), { path: '/' }));
+  (PORTALS.includes(portal) ? [portal] : PORTALS).forEach((name) =>
+    res.clearCookie(sessionCookie(name), {
+      path: '/',
+      sameSite: isSecure ? 'none' : 'lax',
+      secure: isSecure,
+    }),
+  );
 }
 
 /**
