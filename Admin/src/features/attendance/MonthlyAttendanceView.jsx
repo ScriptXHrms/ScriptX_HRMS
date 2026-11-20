@@ -181,7 +181,7 @@ export default function MonthlyAttendanceView({ data, loading, error, onRetry, m
     );
   };
 
-  const workingDays = summary ? summary.eligibleDays - summary.holidays - summary.weeklyOffs : 0;
+  const workingDays = summary?.monthWorkingDays ?? (summary ? summary.eligibleDays - summary.holidays - summary.weeklyOffs : 0);
   const attended = summary ? summary.present + summary.wfh + summary.onDuty + summary.halfDay * 0.5 : 0;
 
   const stats = summary
@@ -193,7 +193,7 @@ export default function MonthlyAttendanceView({ data, loading, error, onRetry, m
         { title: 'Late Logins', value: summary.late, icon: Timer, tone: 'orange', hint: summary.lateLop ? `${summary.lateLop} day late LOP` : 'No late LOP' },
         { title: 'Below 8 Hours', value: summary.lessThan8, icon: Clock3, tone: 'sky' },
         { title: 'Working Hours', value: formatDuration(summary.payableMinutes), icon: Clock3, tone: 'brand' },
-        { title: 'Payable Days', value: summary.payableDays, icon: Wallet, tone: 'green', hint: `of ${summary.eligibleDays} days so far` },
+        { title: 'Payable Days', value: summary.payableDays, icon: Wallet, tone: 'green', hint: `of ${workingDays} working days` },
       ]
     : [];
 

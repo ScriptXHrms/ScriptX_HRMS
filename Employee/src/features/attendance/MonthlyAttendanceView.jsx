@@ -257,7 +257,7 @@ export default function MonthlyAttendanceView({ month, onMonthChange, data, load
     );
   };
 
-  const workingDays = summary ? summary.eligibleDays - summary.holidays - summary.weeklyOffs : 0;
+  const workingDays = summary?.monthWorkingDays ?? (summary ? summary.eligibleDays - summary.holidays - summary.weeklyOffs : 0);
   const attended = summary ? summary.present + summary.wfh + summary.onDuty + summary.halfDay * 0.5 : 0;
 
   return (

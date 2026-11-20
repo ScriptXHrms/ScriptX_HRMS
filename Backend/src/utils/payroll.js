@@ -3,11 +3,9 @@ const round = (value) => Math.round(value * 100) / 100;
 const PF_WAGE_CAP = 1800;
 const ESI_GROSS_LIMIT = 21000;
 
-/** Monthly gross from CTC, keeping employer PF and ESI inside the CTC. */
+/** Monthly gross is directly the salary amount (no PF deduction from gross). */
 function grossFromCtc(ctc) {
-  if (ctc / 1.0925 <= ESI_GROSS_LIMIT) return ctc / 1.0925;
-  if ((ctc / 1.06) * 0.5 <= 15000) return ctc / 1.06;
-  return ctc - PF_WAGE_CAP;
+  return Number(ctc) || 0;
 }
 
 /**
@@ -64,14 +62,15 @@ export function applyOverrides(summary, overrides) {
   const lop = byField.lop?.value ?? summary.lop;
   const lateLop = byField.lateLop?.value ?? summary.lateLop;
   const taskLop = byField.taskLop?.value ?? summary.taskLop ?? 0;
-  const payableDays = byField.payableDays?.value ?? Math.max(0, summary.eligibleDays - summary.holidays - summary.weeklyOffs - lop - lateLop - taskLop);
-  return { ...summary, lop, lateLop, taskLop, payableDays, tds: byField.tds?.value ?? 0 };
+  const workingDays = summary.monthWorkingDays ?? summary.workingDays;
+  const payableDays = byField.payableDays?.value ?? Math.max(0, workingDays - lop - lateLop - taskLop);
+  return { ...summary, lop, lateLop, taskLop, workingDays, payableDays, tds: byField.tds?.value ?? 0 };
 }
 
 /** Salary or stipend for one employee-month, from attendance that already has overrides applied. */
 export function payFor(employee, attendance, daysInMonth, settings) {
   const isStipend = ['Intern', 'Freelancer'].includes(employee.employeeType);
-  const workingDays = attendance.eligibleDays - attendance.holidays - attendance.weeklyOffs;
+  const workingDays = attendance.monthWorkingDays ?? attendance.workingDays;
   const totalLop = attendance.lop + attendance.lateLop + (attendance.taskLop ?? 0);
   const pay = isStipend
     ? calculateStipend({ amount: employee.studentAmount, payableDays: attendance.payableDays, workingDays, daysInMonth, lopDays: totalLop, tds: attendance.tds })

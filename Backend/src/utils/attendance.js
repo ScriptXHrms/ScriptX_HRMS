@@ -219,11 +219,24 @@ export function summarizeMonth(days, settings) {
   const lateUnit = settings.lateLopType === 'Full Day' ? 1 : 0.5;
   const lateLop = settings.lateLopDays > 0 ? Math.floor(totals.late / settings.lateLopDays) * lateUnit : 0;
   const lop = totals.eligibleDays - totals.earnedDays;
-  // workingDays = eligibleDays - holidays - weeklyOffs (the denominator for per-day salary)
-  const workingDays = totals.eligibleDays - totals.holidays - totals.weeklyOffs;
-  // payableDays = workingDays minus leave/absent LOP minus late LOP (sundays/holidays are always paid)
+
+  // Total working days in the entire month (excluding Sundays and Holidays across all days of the month)
+  let monthWorkingDays = 0;
+  let monthSundays = 0;
+  let monthHolidays = 0;
+  days.forEach((day) => {
+    if (day.status === 'Not Joined') return;
+    const isOff = isSunday(day.date);
+    const isHoli = Boolean(day.holidayReason || day.status === 'Holiday');
+    if (isOff) monthSundays += 1;
+    else if (isHoli) monthHolidays += 1;
+    else monthWorkingDays += 1;
+  });
+
+  const workingDays = monthWorkingDays > 0 ? monthWorkingDays : Math.max(1, totals.eligibleDays - totals.holidays - totals.weeklyOffs);
+  // payableDays = total month working days minus LOP minus late LOP
   const payableDays = Math.max(0, workingDays - lop - lateLop);
-  return { ...totals, lateLop, lop, workingDays, payableDays, taskLop: 0 };
+  return { ...totals, lateLop, lop, workingDays, monthWorkingDays: workingDays, monthSundays, monthHolidays, payableDays, taskLop: 0 };
 }
 
 /**
