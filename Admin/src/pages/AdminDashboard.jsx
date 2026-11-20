@@ -336,22 +336,12 @@ export default function AdminDashboard() {
     return (data.pending.leaves ?? 0) + (data.pending.wfh ?? 0) + (data.pending.requests ?? 0);
   }, [data]);
 
-  /* Announcements for Modal: only show if there is announcement data for the current date */
+  /* Announcements for Modal: Show all active announcements */
   const announcementsList = useMemo(() => {
     if (!data?.announcements || data.announcements.length === 0) {
       return [];
     }
-    // Filter strictly for current date (today) announcements
-    const todayAnnouncements = data.announcements.filter((a) => {
-      if (!a.date) return false;
-      return a.date === today || a.date.startsWith(today);
-    });
-
-    if (todayAnnouncements.length === 0) {
-      return [];
-    }
-
-    return todayAnnouncements.map((a, idx) => ({
+    return data.announcements.map((a, idx) => ({
       _id: a._id,
       title: a.title || 'Announcement',
       message: a.message,

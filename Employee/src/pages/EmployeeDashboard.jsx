@@ -503,12 +503,10 @@ export default function EmployeeDashboard() {
     return list.sort((a, b) => (a.sortDate || '').localeCompare(b.sortDate || '')).slice(0, 6);
   }, [data]);
 
-  /* Today's Announcements for Popup Modal */
+  /* Announcements for Popup Modal: Show all active announcements */
   const announcementsForModal = useMemo(() => {
     if (!data?.announcements || data.announcements.length === 0) return [];
-    const todayItems = data.announcements.filter((a) => a.date === today || a.date?.startsWith(today));
-    if (todayItems.length === 0) return [];
-    return todayItems.map((a, idx) => ({
+    return data.announcements.map((a, idx) => ({
       _id: a._id,
       title: a.title || 'Announcement',
       message: a.message,
