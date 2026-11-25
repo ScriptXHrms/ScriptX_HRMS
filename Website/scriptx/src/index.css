@@ -1,0 +1,187 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-page: #EDEEEC;
+    --bg-card: #F9F9F7;
+    --text-primary: #111418;
+    --text-muted: #6B7280;
+    --brand-violet: #40108c;
+    --brand-gold: #f3c72b;
+    --ink-violet: #40108c;
+    --ink-gold: #f3c72b;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #EDEEEC;
+    color: #111418;
+  }
+}
+
+/* Custom Typography Helpers */
+.font-headline {
+  font-family: 'Inter Tight', sans-serif;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+}
+
+.font-serif-display {
+  font-family: 'Instrument Serif', Georgia, serif;
+}
+
+.font-handwriting {
+  font-family: 'Caveat', cursive;
+}
+
+.font-editorial {
+  font-family: 'Newsreader', Georgia, serif;
+}
+
+/* Gold Marker Highlight */
+.marker-highlight {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.marker-highlight::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  bottom: 4px;
+  height: 42%;
+  background-color: #f3c72b;
+  z-index: -1;
+  transform: rotate(-1deg);
+  border-radius: 4px;
+  opacity: 0.95;
+}
+
+/* Dot Grid Backgrounds */
+.bg-board-dots {
+  background-color: #F4F4F2;
+  background-image: radial-gradient(rgba(17, 20, 24, 0.15) 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+}
+
+.bg-board-dots-dark {
+  background-image: radial-gradient(rgba(243, 199, 43, 0.15) 1.2px, transparent 1.2px);
+  background-size: 20px 20px;
+}
+
+/* Deep Aurora Gradient with #40108c and #f3c72b */
+.bg-aurora-premium {
+  background: 
+    radial-gradient(ellipse 70% 50% at 50% -10%, rgba(64, 16, 140, 0.38) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 40% at 85% 55%, rgba(243, 199, 43, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 35% at 15% 75%, rgba(64, 16, 140, 0.25) 0%, transparent 60%),
+    #080414;
+}
+
+/* Luxury Royal Violet (#40108c) Gradient Buttons with Radiant Gold (#f3c72b) Accent */
+.btn-brand-gradient {
+  background: linear-gradient(135deg, #40108c 0%, #5a149c 50%, #781abf 100%);
+  border: 1px solid rgba(243, 199, 43, 0.45);
+  box-shadow: 
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.35), 
+    0 10px 25px -4px rgba(64, 16, 140, 0.55),
+    0 4px 10px -2px rgba(243, 199, 43, 0.25);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-brand-gradient:hover {
+  background: linear-gradient(135deg, #4c13a6 0%, #6817b5 50%, #881fd9 100%);
+  border-color: #f3c72b;
+  box-shadow: 
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.5), 
+    0 14px 32px -4px rgba(64, 16, 140, 0.7),
+    0 0 18px 0 rgba(243, 199, 43, 0.35);
+  transform: translateY(-1.5px);
+}
+
+.btn-glossy-pink {
+  background: linear-gradient(135deg, #40108c 0%, #5a149c 50%, #781abf 100%);
+  border: 1px solid rgba(243, 199, 43, 0.45);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.35), 0 10px 25px -4px rgba(64, 16, 140, 0.5);
+}
+
+.btn-glossy-pink:hover {
+  background: linear-gradient(135deg, #4c13a6 0%, #6817b5 50%, #881fd9 100%);
+  border-color: #f3c72b;
+  box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.5), 0 14px 30px -4px rgba(64, 16, 140, 0.65);
+}
+
+/* Tape Strip Effect */
+.tape-strip {
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px dashed rgba(0, 0, 0, 0.1);
+  transform: rotate(-2deg);
+}
+
+/* Glass Card */
+.glass-aurora {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Soft Paper Shadow */
+.shadow-paper {
+  box-shadow: 0 20px 50px rgba(20, 30, 80, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.shadow-paper-lg {
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.12), 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #EDEEEC;
+}
+::-webkit-scrollbar-thumb {
+  background: #C4C6C2;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9FA19D;
+}
+
+/* Two-Column Vertical Marquee Animations for Testimonials */
+@keyframes marquee-vertical-down {
+  0% {
+    transform: translateY(-50%);
+  }
+  100% {
+    transform: translateY(0%);
+  }
+}
+
+@keyframes marquee-vertical-up {
+  0% {
+    transform: translateY(0%);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+.animate-marquee-down {
+  animation: marquee-vertical-down 32s linear infinite;
+}
+
+.animate-marquee-up {
+  animation: marquee-vertical-up 32s linear infinite;
+}
+
+.pause-marquee-hover:hover .animate-marquee-down,
+.pause-marquee-hover:hover .animate-marquee-up {
+  animation-play-state: paused;
+}
+

@@ -46,6 +46,7 @@ const AdminProjects = lazy(() => import('./pages/projects/AdminProjects'));
 const AdminTasks = lazy(() => import('./pages/projects/AdminTasks'));
 const AdminClients = lazy(() => import('./pages/clients/AdminClients'));
 const AdminInvoices = lazy(() => import('./pages/clients/AdminInvoices'));
+const AdminMom = lazy(() => import('./pages/clients/AdminMom'));
 const AdminAnnouncements = lazy(() => import('./pages/AdminAnnouncements'));
 const AdminPrivileges = lazy(() => import('./pages/AdminPrivileges'));
 const AdminAssets = lazy(() => import('./pages/AdminAssets'));
@@ -118,6 +119,7 @@ const ADMIN_ROUTES = [
     [
       ['clients', AdminClients],
       ['invoices', AdminInvoices],
+      ['mom', AdminMom],
     ],
   ],
   ['announcements', [['announcements', AdminAnnouncements]]],

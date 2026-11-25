@@ -19,6 +19,7 @@ import masterRoutes from './src/routes/masters.js';
 import payrollRoutes from './src/routes/payroll.js';
 import requestRoutes from './src/routes/requests.js';
 import taskRoutes from './src/routes/tasks.js';
+import momRoutes from './src/routes/mom.js';
 import { startAutoLogout } from './src/utils/autoLogout.js';
 import { dummyHandler, startDummyPing } from './src/dummy/dummy.js';
 
@@ -98,6 +99,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/daily-reports', dailyReportRoutes);
 app.use('/api/payroll', payrollRoutes);
 app.use('/api/finance', financeRoutes);
+app.use('/api/mom', momRoutes);
 app.use('/api', masterRoutes);
 
 // In production this process also serves both built portals.

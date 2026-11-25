@@ -300,6 +300,31 @@ export const Project = model(
   ),
 );
 
+export const Mom = model(
+  'Mom',
+  new Schema(
+    {
+      date: { type: String, required: [true, 'Meeting date is required.'] },
+      client: { ...ref('Client'), required: [true, 'Client is required.'] },
+      project: { ...ref('Project'), required: [true, 'Project is required.'] },
+      attendees: [{ ...ref('Employee') }],
+      title: { type: String, trim: true, default: '' },
+      description: { type: String, required: [true, 'Description is required.'] },
+      documents: [
+        {
+          name: String,
+          originalName: String,
+          filepath: String,
+          url: String,
+          size: Number,
+        },
+      ],
+      createdBy: ref('AdminUser'),
+    },
+    opts,
+  ),
+);
+
 const actorSchema = { _id: false, kind: { type: String, enum: ['admin', 'employee'] }, id: Schema.Types.ObjectId, name: String };
 
 export const TASK_STATUSES = ['To Do', 'In Progress', 'In Review', 'Done'];
