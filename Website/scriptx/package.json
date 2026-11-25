@@ -12,6 +12,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.3.5",
     "canvas-confetti": "^1.9.4",
+    "firebase": "^13.4.0",
     "framer-motion": "^14.14.0",
     "gsap": "^3.15.1",
     "lucide-react": "^1.78.0",
