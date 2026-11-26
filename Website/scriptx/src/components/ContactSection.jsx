@@ -299,7 +299,7 @@ export default function ContactSection({ selectedPlan = '15', onSelectPlan }) {
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="e.g. Logeshwaran / Alex Rivera"
+                        placeholder="e.g. Alex Rivera"
                         className="w-full px-4 py-3 rounded-xl bg-[#07080E] border border-white/10 focus:border-[#EC1163] focus:outline-none text-white text-xs placeholder:text-neutral-600 transition-colors"
                       />
                     </div>

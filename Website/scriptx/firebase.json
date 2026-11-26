@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "scriptxorg",
     "public": "dist",
     "ignore": [
       "firebase.json",

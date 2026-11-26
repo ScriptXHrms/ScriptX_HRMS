@@ -1,131 +1,90 @@
 import React, { useState } from 'react';
 import './App.css';
 
-// Core Sections (ContactSection removed from page flow, moved into BookingModal popup)
-import CreatorHero from './components/CreatorHero';
-import AppMockup from './components/AppMockup';
-import VideoBlock from './components/VideoBlock';
-import StickyBoard from './components/StickyBoard';
-import PathSection from './components/PathSection';
-import TestimonialsSection from './components/TestimonialsSection';
-import AuroraPricing from './components/AuroraPricing';
-import NotionSyllabus from './components/NotionSyllabus';
-import FounderLetter from './components/FounderLetter';
-import CreatorFaq from './components/CreatorFaq';
-import FinalCtaFooter from './components/FinalCtaFooter';
-
-// Modals
-import VideoModal from './components/VideoModal';
-import BookingModal from './components/BookingModal';
+// Lane / BrandElevate Components matching the Reference Design
+import LaneHero from './components/LaneHero';
+import LanePartners from './components/LanePartners';
+import LaneAbout from './components/LaneAbout';
+import LaneServices from './components/LaneServices';
+import LanePricing from './components/LanePricing';
+import LaneProcess from './components/LaneProcess';
+import LaneVideoShowcase from './components/LaneVideoShowcase';
+import LaneBlog from './components/LaneBlog';
+import LaneTestimonials from './components/LaneTestimonials';
+import LaneFooter from './components/LaneFooter';
+import LaneConsultationModal from './components/LaneConsultationModal';
 
 export default function App() {
-  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [selectedVideoIndex, setSelectedVideoIndex] = useState(0);
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState('15');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState('15 Videos (₹60,000/mo)');
 
-  const handleOpenVideo = (videoIndex = 0) => {
-    if (typeof videoIndex === 'number') {
-      setSelectedVideoIndex(videoIndex);
-    } else {
-      setSelectedVideoIndex(0);
-    }
-    setIsVideoModalOpen(true);
+  const handleOpenConsultation = (serviceName = '15 Videos (₹60,000/mo)') => {
+    setSelectedService(serviceName);
+    setIsModalOpen(true);
   };
 
-  const handleOpenBooking = (planKey = '15', e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    if (typeof planKey === 'string') {
-      setSelectedPlan(planKey);
-    }
-    setIsBookingModalOpen(true);
-  };
-
-  const handleScrollToPricing = (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    const pricingEl = document.getElementById('pricing');
-    if (pricingEl) {
-      pricingEl.scrollIntoView({ behavior: 'smooth' });
+  const handleScrollTo = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#EDEEEC] text-[#111418] flex flex-col font-sans selection:bg-[#f3c72b] selection:text-[#40108c] relative">
-      
-      {/* Main Content Sections */}
-      <main className="flex-grow">
-        {/* 1. Hero Section with Floating UI Cards, Cursors & Marker Highlight */}
-        <CreatorHero 
-          onWatchVideo={() => handleOpenVideo(0)} 
-          onEnrollClick={handleScrollToPricing} 
+    <div className="min-h-screen bg-white w-full flex flex-col font-sans relative selection:bg-[#703BF7] selection:text-white overflow-x-hidden">
+      <main className="flex-grow w-full">
+        {/* 1. Hero with studio visual, floating glass navbar, request a call button & metrics bar */}
+        <LaneHero 
+          onRequestCall={() => handleOpenConsultation('Brand Discovery Session')}
+          onBookConsultation={() => handleOpenConsultation('VIP Consultation')}
         />
 
-        {/* 2. macOS App Window Mockup: Five Stages. One Done-For-You Production Machine. */}
-        <AppMockup onEnrollClick={() => handleOpenBooking('15')} />
+        {/* 2. Partners and Clients Logo Strip */}
+        <LanePartners />
 
-        {/* 3. Video Block with Rotating Niche Icon Circles & Industry Focus */}
-        <VideoBlock 
-          onOpenVideoModal={handleOpenVideo}
-          onEnrollClick={() => handleOpenBooking('15')} 
+        {/* 3. Meet ScriptX Your Personal Branding Partner + Floating Bestselling Author Card */}
+        <LaneAbout 
+          onRequestCall={() => handleOpenConsultation('Executive Coaching')}
         />
 
-        {/* 4. "Is this you?" Board with Draggable Sticky Notes & Scoped Drawing Canvas */}
-        <StickyBoard onEnrollClick={() => handleOpenBooking('15')} />
-
-        {/* 5. The Executive Trajectory: A -> B Interactive Visualizer */}
-        <PathSection onEnrollClick={() => handleOpenBooking('15')} />
-
-        {/* 6. Testimonials Section: TakeUforward Style - Trusted by Hundreds of Founders & Leaders */}
-        <TestimonialsSection 
-          onOpenVideoModal={handleOpenVideo} 
-          onOpenAuditModal={() => handleOpenBooking('15')} 
+        {/* 4. Personal Branding Services Tailored for You (4 Cards with Active Purple Card) */}
+        <LaneServices 
+          onBookCall={() => handleOpenConsultation('Brand Coaching Program')}
         />
 
-        {/* 7. Pricing: 3 Dedicated Cards (10 Videos / 40K, 15 Videos / 60K, 20 Videos / 80K) */}
-        <AuroraPricing 
-          selectedPlan={selectedPlan}
-          onOpenBooking={handleOpenBooking}
+        {/* 5. 3-Tier Scalable Video Retainer Pricing (10, 15, 20 Videos with WhatsApp Direct) */}
+        <LanePricing 
+          onSelectPlan={(plan) => handleOpenConsultation(plan)}
         />
 
-        {/* 8. Notion-Style Monthly Production Hub with Tamil / English Language Toggle */}
-        <NotionSyllabus />
+        {/* 6. My Coaching Process, Simplified (Interactive Accordion & Studio Scene) */}
+        <LaneProcess 
+          onLearnMore={() => handleScrollTo('pricing')}
+        />
 
-        {/* 9. Founder Letter on Stacked Paper Pages with Drop Cap & Polaroids */}
-        <FounderLetter />
+        {/* 7. Large Video Showcase ("Watch my all activities") */}
+        <LaneVideoShowcase />
 
-        {/* 10. Frequently Asked Questions: Sticky Left Pinned Column + Scrollable Right List */}
-        <CreatorFaq />
+        {/* 8. Insights & Strategies for Building Your Personal Brand (3 Articles) */}
+        <LaneBlog 
+          onSeeAll={() => handleOpenConsultation('Content Strategy')}
+        />
 
-        {/* 11. Final CTA on Dark Background with huge "2027" & Footer */}
-        <FinalCtaFooter onEnrollClick={() => handleOpenBooking('15')} />
+        {/* 9. What My Clients Are Saying (3 Testimonial Cards & Carousel Controls) */}
+        <LaneTestimonials />
       </main>
 
-      {/* Floating Brand Gradient Button (#40108c + #f3c72b) */}
-      <div className="fixed bottom-6 right-6 z-40">
-        <button
-          onClick={() => handleOpenBooking('15')}
-          className="btn-brand-gradient text-white px-5 py-3 rounded-full font-headline font-bold text-xs tracking-tight shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 -rotate-2 cursor-pointer border border-[#f3c72b]/60"
-        >
-          <span className="text-[#f3c72b]">★</span>
-          <span>Claim Retainer Slot &rarr;</span>
-        </button>
-      </div>
-
-      {/* Video Modal with 4 Real Personal Branding Videos */}
-      <VideoModal
-        key={`${selectedVideoIndex}-${isVideoModalOpen}`}
-        isOpen={isVideoModalOpen}
-        onClose={() => setIsVideoModalOpen(false)}
-        initialVideoIndex={selectedVideoIndex}
-        onOpenAuditModal={() => handleOpenBooking('15')}
+      {/* 10. Signature Footer with Nav, Email Pill, Huge SCRIPTX Display Typography & Socials */}
+      <LaneFooter 
+        onContactClick={() => handleOpenConsultation('General Inquiry')}
       />
 
-      {/* Neat Popup Onboarding Modal */}
-      <BookingModal
-        key={`${selectedPlan}-${isBookingModalOpen}`}
-        isOpen={isBookingModalOpen}
-        onClose={() => setIsBookingModalOpen(false)}
-        initialPlan={selectedPlan}
+      {/* 11. WhatsApp-Connected Consultation Modal (+91 7604829279) */}
+      <LaneConsultationModal 
+        key={selectedService}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        defaultService={selectedService}
       />
     </div>
   );
